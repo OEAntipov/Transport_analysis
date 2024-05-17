@@ -2,22 +2,27 @@ import numpy as np
 import pandas as pd
 
 
-pd.set_option('display.max_columns', None)
-pd.set_option('display.max_rows', None)
-pd.set_option('display.float_format', lambda x: '%.3f' % x)
-okveds = ['49.4']
-#, '49.1', '49.2', '49.3', '49.5', '50.10', '50.2', '50.3', '50.4', '51.10', '51.2'
+# Данный код отбирает компании с активами выше 400 млн руб. или выручкой выше 800 млн руб. (это условия для
+# обязательного аудита), после чего данные по отобранным компаниям обрабатываются (заполняются расчетные статьи
+# при отсутствии данных в них, делается математическая проверка заполненных расчетных статей,
+# подсчитывается средневзвешенная для ББ и среднеарифметическая для ОФР)
+
+okveds = ['49.1', '49.2', '49.3', '49.4', '49.5', '50.10', '50.2', '50.3', '50.4', '51.10', '51.2']
 
 for okved in okveds:
     excel = pd.read_excel('2_BFO_of_List_companies.xlsx', sheet_name=okved)
+
+    # срез Активы > 400 млн руб. или Выручка > 800 млн руб.
     sample = excel.query('(current1600 > 400000) | (current2110 > 800000)').reset_index(drop=True)
 
+    # приведение колонок в единый порядок
     sample = sample[['id', 'inn', 'period', 'knd',
                      'current1110', 'current1120', 'current1130', 'current1140', 'current1150', 'current1160', 'current1170', 'current1180', 'current1190', 'current1100', 'current1210', 'current1220', 'current1230', 'current1240', 'current1250', 'current1260', 'current1200',
                      'current1310', 'current1320', 'current1340', 'current1350', 'current1360', 'current1370', 'current1300', 'current13101', 'current13201', 'current13501', 'current13601', 'current13701', 'current13001', 'current1410', 'current1420', 'current1430', 'current1450', 'current1400', 'current1510', 'current1520', 'current1530', 'current1540', 'current1550', 'current1500',
                      'current1600', 'current1700',
                      'current2110', 'current2120', 'current2100', 'current2210', 'current2220', 'current2200', 'current2310', 'current2320', 'current2330', 'current2340', 'current2350', 'current2300', 'current2410', 'current2411', 'current2412', 'current2460', 'current2400', 'current2510', 'current2520', 'current2530', 'current2500', 'current2910', 'current2900']]
 
+    # заполнение пропущенных расчетных статей (Итоги по разделам, Валовая прибыль и т.п.)
     sample.loc[sample['current1100'].isna(), 'current1100'] = sample[['current1110',
                                                                       'current1120',
                                                                       'current1130',
@@ -71,20 +76,25 @@ for okved in okveds:
                                                                                        + sample['current2520'].fillna(0)
                                                                                        + sample['current2530'].fillna(0))
 
+    # удаление неиспользуемых пояснительных колонок и заполнение пропусков нулями
     sample = sample.drop(['current13101', 'current13201', 'current13501', 'current13601', 'current13701', 'current13001'], axis=1)
     sample = sample.fillna(0)
 
+    # количество интервалов (bins) для расчета средневзвешенной по частоте
     steps = int(len(sample.index) / 2)
 
+    # транспонирование и удаление ненужных строк
     sample = sample.transpose(copy=True)
     sample.rename(columns=sample.iloc[1], inplace=True)
     sample.drop(['id', 'period', 'inn', 'knd'], inplace=True)
 
+    # конвертация названий колонок (ИНН) в формат строки для дальнейшего обращения к ним
     columns = []
     for column in list(sample.columns):
         columns.append(str(column))
     sample.columns = columns
 
+    # конвертация финансовых значений в числовой формат
     for k in list(sample):
         sample[k] = pd.to_numeric(sample[k], errors='ignore')
 
@@ -115,6 +125,7 @@ for okved in okveds:
     except:
         pass
 
+    # подсчет средневзвешенной по частоту
     weighted_average = []
     for index, row in sample.iterrows():
         count, division = np.histogram(row, bins=steps)
@@ -131,6 +142,7 @@ for okved in okveds:
                                                                - sample.loc[index, f'weighted_average_bins_{steps}'])
                                                                / (sample.loc[index].count() - 1))
 
+    # добавляем строки с проверкой расчетных значений (целевое значение проверки - 0)
     sample.loc['check1100'] = sample.loc[['current1110',
                                           'current1120',
                                           'current1130',
@@ -192,6 +204,7 @@ for okved in okveds:
                                           'current2520',
                                           'current2530']].sum(0) - sample.loc['current2500']
 
+    # ссумируем результаты проверки
     sample.loc['check1100', f'weighted_average_bins_{steps}'] = sample.loc['check1100'].sum(0) - sample.loc['check1100', f'weighted_average_bins_{steps}']
     sample.loc['check1200', f'weighted_average_bins_{steps}'] = sample.loc['check1200'].sum(0) - sample.loc['check1200', f'weighted_average_bins_{steps}']
     sample.loc['check1300', f'weighted_average_bins_{steps}'] = sample.loc['check1300'].sum(0) - sample.loc['check1300', f'weighted_average_bins_{steps}']

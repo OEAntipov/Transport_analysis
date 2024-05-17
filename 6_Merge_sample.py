@@ -1,12 +1,9 @@
-import numpy as np
 import pandas as pd
 
 
-pd.set_option('display.max_columns', None)
-pd.set_option('display.max_rows', None)
-pd.set_option('display.float_format', lambda x: '%.3f' % x)
+# Данный код собирает данные по отобранным компаниям за 2023, 2022, 2021 в одну таблицу
+
 okveds = ['49.1', '49.2', '49.3', '49.4', '49.5', '50.10', '50.2', '50.3', '50.4', '51.10', '51.2']
-#
 
 for okved in okveds:
     excel_current = pd.read_excel('3.1_BFO_sample.xlsx', sheet_name=okved)

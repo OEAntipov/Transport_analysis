@@ -3,14 +3,16 @@ import time
 import pandas as pd
 
 
-headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0',
-           'Referer': 'https://bo.nalog.ru/search?allFieldsMatch=false&okved=49.5&period=2023&page=1'}
+# Данный код собирает список доступных компаний (их id) на сайте bo.nalog.ru по необходимым ОКВЭД
 
-okveds = ['49.4']
-#'49.1', '49.2', '49.3', '49.5', '50.10', '50.2', '50.3', '50.4', '51.10', '51.2'
+headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0'}
+
+okveds = ['49.1', '49.2', '49.3', '49.4', '49.5', '50.10', '50.2', '50.3', '50.4', '51.10', '51.2']
+
 for okved in okveds:
-
     componies = pd.DataFrame({'id1': [], 'id2': []})
+
+    # Так как по ОКВЭД 49.4 много позиций, он выгружается отдельно
     if okved != '49.4':
         page = 0
         isnot_all_pages = True
@@ -51,6 +53,10 @@ for okved in okveds:
                 isnot_all_pages = False
 
             time.sleep(1)
+
+    # Код ниже выгружает список id компаний по ОКВЭД 49.4
+    # Используемый сайт не позволяет пролистать более 10000 позиций (т.е. 500 страниц, на каждой странице максимум 20
+    # компаний), поэтому используется перебор первых 4-х значений ИНН
     else:
         componies = pd.DataFrame({'id': []})
         for char1 in range(100):
@@ -118,4 +124,4 @@ for okved in okveds:
                 print(f'На момент {inn} уникальных - {len(componies.index)}')
 
         with pd.ExcelWriter('1_List_of_companies.xlsx', mode='a') as writer:
-            componies.to_excel(writer, sheet_name='49.4_inn')
+            componies.to_excel(writer, sheet_name='49.4')

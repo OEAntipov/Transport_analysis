@@ -3,9 +3,11 @@ import requests
 import pandas as pd
 
 
+# Данный код собирает отчетность компаний (ББ и ОФР) по списку, собранному в предыдущем файле
+
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0'}
-okveds = ['49.4']
-#'49.2', '49.3', '49.1', '49.5', '50.10', '50.2', '50.3', '50.4', '51.10', '51.2'
+
+okveds = ['49.1', '49.2', '49.3', '49.4', '49.5', '50.10', '50.2', '50.3', '50.4', '51.10', '51.2']
 
 for okved in okveds:
     excel_orgs = pd.read_excel('1_List_of_companies.xlsx', sheet_name=okved, dtype=object)

@@ -81,7 +81,7 @@ for okved in okveds:
 
         columns = []
         for column in list(sample.columns):
-            columns.append(str(column))
+            columns.append(str(int(column)))
         sample.columns = columns
 
         for k in list(sample):
@@ -105,11 +105,6 @@ for okved in okveds:
                 sample.loc[f'{year}2410', column] = -sample.loc[f'{year}2410', column]
 
         try:
-            sample.loc[f'{year}2220', '2309121212'] = -sample.loc[f'{year}2220', '2309121212']
-        except:
-            pass
-
-        try:
             sample = sample.drop('7802003841', axis=1)
         except:
             pass
@@ -127,7 +122,7 @@ for okved in okveds:
         # для ОФР считаем среднеарифметическую
         for index, row in sample.loc[f'{year}2110':f'{year}2900'].iterrows():
             sample.loc[index, f'weighted_average_bins_{steps}'] = ((sample.loc[index].sum(0)
-                                                                   - sample.loc[index, f'weighted_average_bins_{steps}'])
+                                                                    - sample.loc[index, f'weighted_average_bins_{steps}'])
                                                                    / (sample.loc[index].count() - 1))
 
         sample.loc['check1100'] = sample.loc[[f'{year}1110',
